@@ -30,7 +30,7 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
-  serverExternalPackages: ["pg", "exceljs", "@node-rs/argon2"],
+  serverExternalPackages: ["mysql2", "exceljs", "@node-rs/argon2"],
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },

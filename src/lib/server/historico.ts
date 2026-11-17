@@ -111,7 +111,9 @@ function calcularHash(anterior: string | null, r: Omit<LinhaHistorico, "id" | "h
 /** Grava registros no histórico. Deve ser chamado dentro de uma transação. */
 export async function registrar(c: Executor, ator: Ator, registros: NovoRegistro[]): Promise<void> {
   if (registros.length === 0) return;
-  await c.query("SELECT pg_advisory_xact_lock($1)", [TRAVA_HISTORICO]);
+  // Serializa inserções no histórico para garantir integridade da cadeia de hashes.
+  await c.query("SELECT GET_LOCK('rh_gcf_historico', 10)");
+  try {
   const ultimo = await c.query<{ hash: string }>("SELECT hash FROM historico ORDER BY id DESC LIMIT 1");
   let anterior: string | null = ultimo.rows[0]?.hash ?? null;
   const agora = new Date();
@@ -145,6 +147,9 @@ export async function registrar(c: Executor, ator: Ator, registros: NovoRegistro
       ],
     );
     anterior = hash;
+  }
+  } finally {
+    await c.query("SELECT RELEASE_LOCK('rh_gcf_historico')");
   }
 }
 

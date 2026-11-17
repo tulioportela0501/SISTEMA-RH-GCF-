@@ -1,7 +1,6 @@
 import "server-only";
 import { z } from "zod";
-import type { PoolClient } from "pg";
-import { query, queryOne, transacao } from "./db";
+import { query, queryOne, transacao, type Executor } from "./db";
 import { ErroHttp } from "./http";
 import { registrar, type Ator } from "./historico";
 import { SELECT_DATAS_CLIENTE, listarDatasCliente } from "./datas";
@@ -50,8 +49,8 @@ export async function salvarConfigFelicitacoes(dia: number, versao: number, ator
     if (!atual) throw new ErroHttp(500, "Configuração das felicitações não encontrada. Rode npm run db:migrate.");
     if (atual.versao !== versao) throw new ErroHttp(409, "A configuração foi alterada por outra pessoa. Recarregue a página.");
     if (atual.dia_padrao === dia) return atual;
-    const r = await c.query<ConfigFelicitacoes>(
-      "UPDATE felicitacoes_config SET dia_padrao = $1, versao = versao + 1, atualizado_em = now(), atualizado_por = $2 WHERE id = 1 RETURNING dia_padrao, versao",
+    await c.query(
+      "UPDATE felicitacoes_config SET dia_padrao = $1, versao = versao + 1, atualizado_em = now(), atualizado_por = $2 WHERE id = 1",
       [dia, usuarioId],
     );
     await registrar(c, ator, [
@@ -66,7 +65,10 @@ export async function salvarConfigFelicitacoes(dia: number, versao: number, ator
         descricao: `${ator.nome} alterou o dia padrão das felicitações (Início GCF só com mês e ano) de ${atual.dia_padrao} para ${dia}.`,
       },
     ]);
-    return r.rows[0];
+    const atualizado = await c.query<ConfigFelicitacoes>(
+      "SELECT dia_padrao, versao FROM felicitacoes_config WHERE id = 1",
+    );
+    return atualizado.rows[0];
   });
 }
 
@@ -244,7 +246,7 @@ function quando(d: string | Date | null): string {
 }
 
 export async function executarAcao(a: AcaoFelicitacao, u: UsuarioSessao, ator: Ator): Promise<RegistroFelicitacao | null> {
-  return transacao(async (c: PoolClient) => {
+  return transacao(async (c) => {
     const d = (await c.query<DataCliente>(`${SELECT_DATAS_CLIENTE} WHERE id = $1 FOR UPDATE`, [a.dataClienteId])).rows[0];
     if (!d) throw new ErroHttp(404, "Cliente não encontrado.");
     if (!ehClienteParceria(d)) throw new ErroHttp(422, "Este cadastro não tem aniversário de parceria (Início GCF).");
@@ -331,7 +333,7 @@ export async function executarAcao(a: AcaoFelicitacao, u: UsuarioSessao, ator: A
 type Etapa = "PREPARADO" | "ABERTO" | "ENVIADO" | "NAO_ENVIAR";
 
 async function gravar(
-  c: PoolClient,
+  c: Executor,
   atual: RegistroFelicitacao | null,
   x: {
     d: DataCliente;

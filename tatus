@@ -1,0 +1,17 @@
+ .env.example                               |  31 [32m++[m[31m--[m
+ db/migrations/001_estrutura_inicial.sql    | 265 [32m++++++++++++++[m[31m---------------[m
+ db/migrations/002_felicitacoes.sql         | 150 [32m+++++++++[m[31m-------[m
+ db/migrations/003_felicitacao_imagem.sql   |  61 [32m+++[m[31m----[m
+ db/migrations/004_preferencias_usuario.sql |  22 [32m+[m[31m--[m
+ next.config.ts                             |   2 [32m+[m[31m-[m
+ package-lock.json                          | 190 [32m+++++++++++++[m[31m--------[m
+ package.json                               |   2 [32m+[m[31m-[m
+ scripts/backup.ts                          |  47 [32m+++[m[31m--[m
+ scripts/migrate.ts                         |  64 [32m++++[m[31m---[m
+ scripts/seed-admin.ts                      |  88 [32m+++++++[m[31m---[m
+ src/lib/server/db.ts                       | 227 [32m+++++++++++++++++++[m[31m-----[m
+ src/lib/server/felicitacoes.ts             |  16 [32m+[m[31m-[m
+ src/lib/server/funcionarios.ts             |   3 [32m+[m[31m-[m
+ src/lib/server/historico.ts                |   7 [32m+[m[31m-[m
+ src/lib/server/importacao-clientes.ts      |   5 [32m+[m[31m-[m
+ 16 files changed, 735 insertions(+), 445 deletions(-)

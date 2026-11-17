@@ -1,5 +1,4 @@
 import "server-only";
-import type { PoolClient } from "pg";
 import { query, queryOne, transacao, type Executor } from "./db";
 import { ErroHttp } from "./http";
 import { diferencasFuncionario, registrar, type Ator, type NovoRegistro } from "./historico";
@@ -122,7 +121,7 @@ export async function atualizarFuncionario(
 
 /** Reativar (ou desligar) direto pela ficha — somente administrador. */
 export async function alterarStatusVinculo(id: number, status: StatusVinculo, versao: number, ator: Ator, usuarioId: number): Promise<Funcionario> {
-  return transacao(async (c: PoolClient) => {
+  return transacao(async (c) => {
     const atual = (await c.query<Funcionario>(`${SELECT_FUNCIONARIO} WHERE id = $1 FOR UPDATE`, [id])).rows[0];
     if (!atual) throw new ErroHttp(404, "Funcionário não encontrado.");
     if (atual.versao !== versao) throw new ErroHttp(409, "Este cadastro foi alterado por outra pessoa. Recarregue a página.");

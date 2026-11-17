@@ -1,11 +1,13 @@
--- ---------------------------------------------------------------
--- Preferências de visualização de cada usuário (ex.: colunas visíveis e larguras da Planilha Geral de Funcionários).
--- Só aparência: ocultar uma coluna não altera nenhum dado.
--- ---------------------------------------------------------------
+-- =====================================================================
+-- Preferências de visualização por usuário (MySQL)
+-- =====================================================================
+SET NAMES utf8mb4;
+
 CREATE TABLE IF NOT EXISTS preferencias_usuario (
-  usuario_id    INTEGER     NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
-  chave         TEXT        NOT NULL CHECK (char_length(chave) <= 80),
-  valor         JSONB       NOT NULL,
-  atualizado_em TIMESTAMPTZ NOT NULL DEFAULT now(),
-  PRIMARY KEY (usuario_id, chave)
-);
+  usuario_id    INT          NOT NULL,
+  chave         VARCHAR(80)  NOT NULL,
+  valor         JSON         NOT NULL,
+  atualizado_em DATETIME     NOT NULL DEFAULT NOW(),
+  PRIMARY KEY (usuario_id, chave),
+  CONSTRAINT fk_pref_usr FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

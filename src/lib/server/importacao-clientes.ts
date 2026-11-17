@@ -1,7 +1,6 @@
 import "server-only";
 import { createHash } from "node:crypto";
-import type { PoolClient } from "pg";
-import { queryOne, transacao } from "./db";
+import { queryOne, transacao, type Executor } from "./db";
 import { ErroHttp } from "./http";
 import { registrar, type Ator } from "./historico";
 import { SELECT_DATAS_CLIENTE, atualizarDataClienteExistente, dataClienteSchema, inserirDataCliente, listarDatasCliente } from "./datas";
@@ -98,7 +97,7 @@ export interface ResultadoClientes {
  * - Já cadastrado: completa só os campos vazios; valores diferentes só são substituídos se o id estiver em `substituir`.
  */
 export async function gravarClientes(
-  c: PoolClient,
+  c: Executor,
   lidos: ClienteLido[],
   substituir: Set<string>,
   ctx: { loteId: number; arquivo: string; ator: Ator; usuarioId: number },
