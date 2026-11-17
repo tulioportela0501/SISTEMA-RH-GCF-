@@ -1,0 +1,13 @@
+{
+  // Executar e Depurar (Ctrl+Shift+D) → "Depurar sistema" → F5
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Depurar sistema",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "npm run dev",
+      "serverReadyAction": { "pattern": "- Local:.+(https?://\\S+)", "uriFormat": "%s", "action": "openExternally" }
+    }
+  ]
+}
