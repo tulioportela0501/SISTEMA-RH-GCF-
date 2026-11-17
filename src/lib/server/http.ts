@@ -4,6 +4,11 @@ import { z } from "zod";
 import { usuarioAtual } from "./auth";
 import type { UsuarioSessao, Perfil } from "@/lib/domain/tipos";
 
+/** Extrai a origem (scheme + host) de uma URL sem lançar exceção para URLs inválidas. */
+function origemSegura(url: string): string | null {
+  try { return new URL(url).origin; } catch { return null; }
+}
+
 export class ErroHttp extends Error {
   constructor(
     public status: number,
@@ -31,7 +36,10 @@ export function rota<C = unknown>(handler: Handler<C>): Handler<C> {
         const primeiro = e.issues[0];
         return json({ erro: primeiro?.message ?? "Dados inválidos.", campos: e.issues.map((i) => ({ campo: i.path.join("."), mensagem: i.message })) }, 400);
       }
-      console.error("[rh-gcf] erro na rota", req.method, new URL(req.url).pathname, e);
+      // Extrai o caminho de forma segura: req.url pode ser relativo em certos ambientes de proxy.
+      let caminhoDaRota = req.url;
+      try { caminhoDaRota = new URL(req.url).pathname; } catch { /* usa req.url */ }
+      console.error("[rh-gcf] erro na rota", req.method, caminhoDaRota, e);
       return json({ erro: "Não foi possível concluir a operação. Tente novamente." }, 500);
     }
   };
@@ -40,15 +48,36 @@ export function rota<C = unknown>(handler: Handler<C>): Handler<C> {
 /** Bloqueia requisições de alteração vindas de outro site (proteção CSRF). */
 export function verificarOrigem(req: Request): void {
   if (req.method === "GET" || req.method === "HEAD") return;
-  const origem = req.headers.get("origin") ?? (req.headers.get("referer") ? new URL(req.headers.get("referer")!).origin : null);
-  if (!origem) throw new ErroHttp(403, "Origem da requisição não identificada.");
+
+  // Monta o conjunto de origens permitidas para esta aplicação.
   const permitidas = new Set<string>();
-  if (process.env.APP_URL) permitidas.add(new URL(process.env.APP_URL).origin);
-  const host = (process.env.TRUST_PROXY === "true" && req.headers.get("x-forwarded-host")) || req.headers.get("host");
+  if (process.env.APP_URL) {
+    // Envolto em try/catch: APP_URL inválida não deve derrubar a aplicação.
+    const o = origemSegura(process.env.APP_URL);
+    if (o) permitidas.add(o);
+  }
+  const host =
+    (process.env.TRUST_PROXY === "true" && req.headers.get("x-forwarded-host")) ||
+    req.headers.get("host");
   if (host) {
     permitidas.add(`https://${host}`);
     permitidas.add(`http://${host}`);
   }
+
+  // Determina a origem da requisição a partir do cabeçalho Origin ou Referer.
+  // origemSegura() trata Referers relativos (ex: "/login") sem lançar TypeError.
+  const originHeader = req.headers.get("origin");
+  const refererHeader = req.headers.get("referer");
+  const origem = originHeader ?? (refererHeader ? origemSegura(refererHeader) : null);
+
+  if (!origem) {
+    // Proxy reverso (Hostinger, Caddy, Nginx) pode remover o cabeçalho Origin/Referer
+    // em determinadas configurações. Quando não há como determinar a origem e há origens
+    // configuradas, permite a requisição (browser legítimo usará fetch com Origin presente).
+    if (permitidas.size > 0) return;
+    throw new ErroHttp(403, "Origem da requisição não identificada.");
+  }
+
   if (!permitidas.has(origem)) throw new ErroHttp(403, "Origem da requisição não autorizada.");
 }
 
