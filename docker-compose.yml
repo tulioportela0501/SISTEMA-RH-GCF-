@@ -1,0 +1,61 @@
+# Publicação completa: PostgreSQL + sistema + HTTPS automático (Caddy) + backup diário.
+# Uso: preencha o .env (POSTGRES_PASSWORD, DOMINIO, APP_URL) e rode:  docker compose up -d --build
+services:
+  banco:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: rh_gcf
+      POSTGRES_USER: rh_gcf
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Defina POSTGRES_PASSWORD no .env}
+    volumes:
+      - dados_banco:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U rh_gcf -d rh_gcf"]
+      interval: 10s
+      retries: 5
+
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      banco:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://rh_gcf:${POSTGRES_PASSWORD}@banco:5432/rh_gcf
+      APP_URL: https://${DOMINIO}
+      TRUST_PROXY: "true"
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    depends_on: [app]
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMINIO: ${DOMINIO:?Defina DOMINIO no .env}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_dados:/data
+
+  backup:
+    image: postgres:16
+    restart: unless-stopped
+    depends_on:
+      banco:
+        condition: service_healthy
+    environment:
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - ./backups:/backups
+    # Um backup por dia, mantendo os últimos 30
+    entrypoint: >
+      sh -c 'while true; do
+        pg_dump -h banco -U rh_gcf -d rh_gcf --format=custom --file=/backups/rh_gcf_$$(date +%Y-%m-%d_%H%M).dump;
+        find /backups -name "rh_gcf_*.dump" -mtime +30 -delete;
+        sleep 86400; done'
+
+volumes:
+  dados_banco:
+  caddy_dados:

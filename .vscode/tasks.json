@@ -1,0 +1,29 @@
+{
+  // Terminal → Executar Tarefa... (ou Ctrl+Shift+P → "Tasks: Run Task")
+  "version": "2.0.0",
+  "tasks": [
+    { "label": "1. Instalar dependências", "type": "shell", "command": "npm install", "problemMatcher": [] },
+    { "label": "2. Criar tabelas no banco", "type": "shell", "command": "npm run db:migrate", "problemMatcher": [] },
+    { "label": "3. Criar administrador", "type": "shell", "command": "npm run db:seed-admin", "problemMatcher": [], "presentation": { "focus": true } },
+    {
+      "label": "Rodar sistema (desenvolvimento)",
+      "detail": "Abre em http://localhost:3000 e atualiza sozinho ao salvar um arquivo",
+      "type": "shell",
+      "command": "npm run dev",
+      "isBackground": true,
+      "problemMatcher": [],
+      "group": { "kind": "build", "isDefault": true }
+    },
+    { "label": "Compilar para produção", "type": "shell", "command": "npm run build", "problemMatcher": [] },
+    {
+      "label": "Rodar sistema (produção)",
+      "type": "shell",
+      "command": "npm run start",
+      "dependsOn": "Compilar para produção",
+      "isBackground": true,
+      "problemMatcher": []
+    },
+    { "label": "Testes automáticos", "type": "shell", "command": "npm test", "problemMatcher": [], "group": "test" },
+    { "label": "Backup do banco", "type": "shell", "command": "npm run db:backup", "problemMatcher": [] }
+  ]
+}

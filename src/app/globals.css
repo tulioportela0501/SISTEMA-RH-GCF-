@@ -1,0 +1,71 @@
+@import "tailwindcss";
+
+/*
+ * Identidade visual RH GCF — azul-escuro, azul e branco (cores da logomarca do Grupo Conceito Fiscal).
+ * Leiaute de referência: dashboard do GCF CertControl.
+ */
+@theme {
+  --font-sans: "Inter Variable", "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  /* Azul-escuro (barra lateral) */
+  --color-marinho-950: #08142a;
+  --color-marinho-900: #0c1b33;
+  --color-marinho-800: #14284a;
+  --color-marinho-700: #1d3560;
+  --color-marinho-300: #93a4c3;
+
+  /* Azul da logomarca */
+  --color-azul-50: #eef6fd;
+  --color-azul-100: #d7eafb;
+  --color-azul-200: #b0d6f6;
+  --color-azul-400: #26aded;
+  --color-azul-500: #1e88e5;
+  --color-azul-600: #1668b8;
+  --color-azul-700: #105388;
+
+  /* Neutros */
+  --color-fundo: #f5f7fa;
+  --color-borda: #e3e8ef;
+  --color-borda-forte: #cbd3df;
+  --color-texto: #0f172a;
+  --color-texto-suave: #64748b;
+  --color-texto-fraco: #94a3b8;
+
+  /* Estados (como no CertControl) */
+  --color-ambar-50: #fff8eb;
+  --color-ambar-200: #f7d9a0;
+  --color-ambar-500: #f59e0b;
+  --color-ambar-600: #d97706;
+  --color-vermelho-50: #fef2f2;
+  --color-vermelho-200: #f5c2c2;
+  --color-vermelho-500: #ef4444;
+  --color-vermelho-600: #dc2626;
+  --color-verde-50: #f0fdf4;
+  --color-verde-200: #bbe5c8;
+  --color-verde-600: #16a34a;
+}
+
+@layer base {
+  body {
+    background: var(--color-fundo);
+    color: var(--color-texto);
+    font-family: var(--font-sans);
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-azul-500);
+    outline-offset: 2px;
+  }
+}
+
+@utility numeros {
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
